@@ -8,7 +8,7 @@
         "aksAgentPoolNodeCount": {
             "value": 2
         },
-        "aksAgentPoolVMSize": {
+        "vmSize": {
             "value": "Standard_DS2_v2"
         },
         "appGatewayCertificateOption": {
@@ -70,14 +70,6 @@
         "enableCookieBasedAffinity": {
             "value": true
         },
-        "identity": {
-            "value": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                    "#userAssignedManagedIdentity#": {}
-                }
-            }
-        },
         "jdbcDataSourceName": {
             "value": "jdbc/CargoTrackerDB"
         },
@@ -92,9 +84,6 @@
         },
         "ocrSSOUser": {
             "value": "#ocrSSOUser#"
-        },
-        "servicePrincipal": {
-            "value": "#servicePrincipal#"
         },
         "wdtRuntimePassword": {
             "value": "#wdtRuntimePassword#"

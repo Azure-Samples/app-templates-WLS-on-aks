@@ -89,7 +89,6 @@ DISAMBIG_PREFIX=${DISAMBIG_PREFIX}`date +%m%d`
 msg "${GREEN}Using disambiguation prefix ${DISAMBIG_PREFIX}${NOFORMAT}"
 
 SERVICE_PRINCIPAL_NAME=${DISAMBIG_PREFIX}sp
-USER_ASSIGNED_MANAGED_IDENTITY_NAME=${DISAMBIG_PREFIX}u
 
 # get default location if not set at the beginning of this file
 if [ "$LOCATION" == '' ] ; then
@@ -108,7 +107,7 @@ if [ "$LOCATION" == '' ] ; then
 fi
 
 # Check AZ CLI status
-msg "${GREEN}(1/6) Checking Azure CLI status...${NOFORMAT}"
+msg "${GREEN}(1/4) Checking Azure CLI status...${NOFORMAT}"
 {
   az > /dev/null
 } || {
@@ -127,7 +126,7 @@ msg "${GREEN}(1/6) Checking Azure CLI status...${NOFORMAT}"
 msg "${YELLOW}Azure CLI is installed and configured!"
 
 # Check GitHub CLI status
-msg "${GREEN}(2/6) Checking GitHub CLI status...${NOFORMAT}"
+msg "${GREEN}(2/4) Checking GitHub CLI status...${NOFORMAT}"
 USE_GITHUB_CLI=false
 {
   gh auth status && USE_GITHUB_CLI=true && msg "${YELLOW}GitHub CLI is installed and configured!"
@@ -137,36 +136,19 @@ USE_GITHUB_CLI=false
 }
 
 # Execute commands
-msg "${GREEN}(3/6) Create service principal and Azure credentials ${SERVICE_PRINCIPAL_NAME} with Contributor role in subscription scope."
+msg "${GREEN}(3/4) Create Azure credentials ${SERVICE_PRINCIPAL_NAME} with Contributor and User Access Administrator role in subscription scope."
 SUBSCRIPTION_ID=$(az account show --query id --output tsv --only-show-errors)
 
 ### AZ ACTION CREATE
+AZURE_CREDENTIALS=$(az ad sp create-for-rbac --name ${SERVICE_PRINCIPAL_NAME} --role "Contributor" --scopes "/subscriptions/${SUBSCRIPTION_ID}" --sdk-auth --only-show-errors)
+SP_OBJECT_ID_ARRAY=$(az ad sp list --display-name ${SERVICE_PRINCIPAL_NAME} --query "[].appId") || true
+# remove whitespace
+SP_OBJECT_ID_ARRAY=$(echo ${SP_OBJECT_ID_ARRAY} | xargs) || true
+SP_OBJECT_ID_ARRAY=${SP_OBJECT_ID_ARRAY//[/}
+SP_OBJECT_ID=${SP_OBJECT_ID_ARRAY//]/}
+az role assignment create --assignee ${SP_OBJECT_ID} --role "User Access Administrator" --subscription "${SUBSCRIPTION_ID}"
 
-SERVICE_PRINCIPAL_BASE64=$(az ad sp create-for-rbac --name ${SERVICE_PRINCIPAL_NAME} --role "Contributor" --scopes "/subscriptions/${SUBSCRIPTION_ID}" --sdk-auth --only-show-errors | base64 -w0)
-AZURE_CREDENTIALS=$(echo $SERVICE_PRINCIPAL_BASE64 | base64 -d)
-
-### AZ ACTION CREATE
-
-msg "${GREEN}(4/6) Create User assigned managed identity ${USER_ASSIGNED_MANAGED_IDENTITY_NAME}"
-az group create --name ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --location ${LOCATION}
-az identity create --name ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --location ${LOCATION} --resource-group ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --subscription ${SUBSCRIPTION_ID}
-USER_ASSIGNED_MANAGED_IDENTITY_ID_NOT_ESCAPED=$(az identity show --name ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --resource-group ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --query id)
-
-### AZ ACTION MUTATE
-
-msg "${GREEN}(5/6) Grant Owner role in subscription scope to ${USER_ASSIGNED_MANAGED_IDENTITY_NAME}. Sleeping for ${SLEEP_VALUE} first."
-sleep ${SLEEP_VALUE}
-ASSIGNEE_OBJECT_ID=$(az identity show --name ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --resource-group ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --query principalId)
-# strip quotes
-ASSIGNEE_OBJECT_ID=${ASSIGNEE_OBJECT_ID//\"/}
-az role assignment create --role Owner --assignee-principal-type ServicePrincipal --assignee-object-id ${ASSIGNEE_OBJECT_ID} --subscription ${SUBSCRIPTION_ID} --scope /subscriptions/${SUBSCRIPTION_ID}
-
-# https://stackoverflow.com/questions/13210880/replace-one-substring-for-another-string-in-shell-script
-USER_ASSIGNED_MANAGED_IDENTITY_ID=${USER_ASSIGNED_MANAGED_IDENTITY_ID_NOT_ESCAPED//\//\\/}
-# remove leading and trailing quote
-USER_ASSIGNED_MANAGED_IDENTITY_ID=${USER_ASSIGNED_MANAGED_IDENTITY_ID//\"/}
-
-msg "${GREEN}(6/6) Create secrets in GitHub"
+msg "${GREEN}(4/4) Create secrets in GitHub"
 if $USE_GITHUB_CLI; then
   {
     msg "${GREEN}Using the GitHub CLI to set secrets.${NOFORMAT}"
@@ -177,15 +159,9 @@ if $USE_GITHUB_CLI; then
     gh ${GH_FLAGS} secret set DB_PASSWORD -b"${DB_PASSWORD}"
     gh ${GH_FLAGS} secret set ORC_SSOPSW -b"${ORC_SSOPSW}"
     gh ${GH_FLAGS} secret set ORC_SSOUSER -b"${ORC_SSOUSER}"
-    gh ${GH_FLAGS} secret set SERVICE_PRINCIPAL -b"${SERVICE_PRINCIPAL_BASE64}"
-    msg "${YELLOW}\"SERVICE_PRINCIPAL\""
-    msg "${GREEN}${SERVICE_PRINCIPAL_BASE64}"
-    gh ${GH_FLAGS} secret set USER_ASSIGNED_MANAGED_IDENTITY_ID -b"${USER_ASSIGNED_MANAGED_IDENTITY_ID}"
-    msg "${YELLOW}\"USER_ASSIGNED_MANAGED_IDENTITY_ID\""
-    msg "${GREEN}${USER_ASSIGNED_MANAGED_IDENTITY_ID}"
     gh ${GH_FLAGS} secret set WDT_RUNTIMEPSW -b"${WDT_RUNTIMEPSW}"
-    gh ${GH_FLAGS} secret set WLS_PSW -b"${WLS_PSW}"    
-    gh ${GH_FLAGS} secret set WLS_USERNAME -b"${WLS_USERNAME}"    
+    gh ${GH_FLAGS} secret set WLS_PSW -b"${WLS_PSW}"
+    gh ${GH_FLAGS} secret set WLS_USERNAME -b"${WLS_USERNAME}"
   } || {
     USE_GITHUB_CLI=false
   }
@@ -206,10 +182,6 @@ if [ $USE_GITHUB_CLI == false ]; then
   msg "${GREEN}${ORC_SSOPSW}"
   msg "${YELLOW}\"ORC_SSOUSER\""
   msg "${GREEN}${ORC_SSOUSER}"
-  msg "${YELLOW}\"SERVICE_PRINCIPAL\""
-  msg "${GREEN}${SERVICE_PRINCIPAL_BASE64}"
-  msg "${YELLOW}\"USER_ASSIGNED_MANAGED_IDENTITY_ID\""
-  msg "${GREEN}${USER_ASSIGNED_MANAGED_IDENTITY_ID}"
   msg "${YELLOW}\"WDT_RUNTIMEPSW\""
   msg "${GREEN}${WDT_RUNTIMEPSW}"
   msg "${YELLOW}\"WLS_PSW\""
