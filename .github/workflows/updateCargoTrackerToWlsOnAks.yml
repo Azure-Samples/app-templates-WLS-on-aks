@@ -108,7 +108,8 @@ jobs:
               run: |
                 chmod ugo+x -R weblogic-azure/
                 cd weblogic-azure/weblogic-azure-aks/src/main/arm/scripts
-                echo ${{ env.azureACRPassword }} ${{ env.ocrSSOPSW }} | ./buildWLSDockerImage.sh ${{ github.event.inputs.wlsImagePath }} ${{ github.event.inputs.azureACRServer }} ${{ github.event.inputs.azureACRUserName }} ${{ env.imageTag }} ["${cargoTrackerBlobUrl}"] ${{ env.ocrSSOUser }} ${{ github.event.inputs.wlsClusterSize }} false false false true []
+                encodedAppUrl=$(echo "[\"${cargoTrackerBlobUrl}\"]" | base64 -w0)
+                echo ${{ env.azureACRPassword }} ${{ env.ocrSSOPSW }} | ./buildWLSDockerImage.sh ${{ github.event.inputs.wlsImagePath }} ${{ github.event.inputs.azureACRServer }} ${{ github.event.inputs.azureACRUserName }} ${{ env.imageTag }} ${encodedAppUrl} ${{ env.ocrSSOUser }} ${{ github.event.inputs.wlsClusterSize }} false false false true W10K
             - name: Connect to AKS cluster
               run: |
                 echo "connect to cluster"
@@ -171,7 +172,7 @@ jobs:
               run: |
                 appgatewayname=$(az resource list --resource-group ${{ github.event.inputs.resourceGroupForWlsAks }} --query "[?type=='Microsoft.Network/applicationGateways'].name|[0]" -o tsv)
                 echo $appgatewayname
-                publicIpAddressId=$(az network application-gateway show --resource-group ${{ github.event.inputs.resourceGroupForWlsAks }} --name ${appgatewayname} --query frontendIpConfigurations[0].publicIpAddress.id -o tsv)
+                publicIpAddressId=$(az network application-gateway show --resource-group ${{ github.event.inputs.resourceGroupForWlsAks }} --name ${appgatewayname} --query frontendIPConfigurations[0].publicIPAddress.id -o tsv)
                 echo $publicIpAddressId
                 appGatewayURL=$(az network public-ip show --resource-group ${{ github.event.inputs.resourceGroupForWlsAks }} --ids ${publicIpAddressId} --query dnsSettings.fqdn -o tsv)
                 echo $appGatewayURL
