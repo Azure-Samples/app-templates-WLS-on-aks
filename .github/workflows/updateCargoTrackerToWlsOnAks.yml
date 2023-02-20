@@ -46,7 +46,7 @@ on:
   repository_dispatch:
 
 env:
-    azCliVersion: 2.30.0
+    azCliVersion: 2.40.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
     location: ${{ github.event.inputs.region }}
     ocrSSOUser: ${{ secrets.ORC_SSOUSER }}
@@ -54,7 +54,7 @@ env:
     azureACRPassword: ${{ secrets.AZURE_ACR_PASSWORD }}
     imageTag: ${{ github.run_id }}${{ github.run_number }}
     aksRepoUserName: oracle
-    aksRepoBranchName: cf0de45c090c29737f901c1d2cb6457555669213
+    aksRepoBranchName: 364b7648bbe395cb17683180401d07a3029abe91
 
 jobs:
     deploy-cargo-tracker:
