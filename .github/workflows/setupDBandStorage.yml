@@ -107,4 +107,12 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     az storage blob upload --account-name ${{ env.storageAccountName }} --container-name ${{ env.storageContainerName }} --file cargotracker/target/cargo-tracker.war --name cargo-tracker.war
-             
+    summarize:
+      needs: preflight
+      runs-on: ubuntu-latest
+
+      steps:
+      - name: Write to workflow job summary
+        run: |
+          SUMMARY=$'# Resources Summary\n## Storage Account: ${{ env.storageAccountName }}\n## Storage Container: ${{ env.storageContainerName }}\n##Database: ${{env.dbName}}'
+          echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
