@@ -114,5 +114,5 @@ jobs:
       steps:
       - name: Write to workflow job summary
         run: |
-          SUMMARY=$'# Resources Summary\n## Storage Account: ${{ env.storageAccountName }}\n## Storage Container: ${{ env.storageContainerName }}\n##Database: ${{env.dbName}}'
+          SUMMARY=$'# Resources Summary\n## Storage Account: ${{ env.storageAccountName }}\n## Storage Container: ${{ env.storageContainerName }}\n## Database: ${{env.dbName}}'
           echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
