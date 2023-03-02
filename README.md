@@ -1,6 +1,6 @@
 # Oracle Weblogic Server Cargo Tracker Application Deployed to Azure Kubernetes Service (AKS)
 ## Description 
-In this sample app template of the Domain-Driven Design Jakarta EE application. The Application is built with Maven and deployed to Oracle WebLogic Server running in an Azure Kubernetes Service (AKS) exposed by Azure Application Gateway.
+This is sample app template of the Domain-Driven Design Jakarta EE application. The application is built with Maven and deployed to Oracle WebLogic Server running in an Azure Kubernetes Service (AKS). The applciation is exposed by Azure Application Gateway.
 
 ## Deploy Oracle WebLogic Server Application to Azure Kubernetes Service:
 
@@ -57,27 +57,13 @@ This creates a local copy of the repository for you to work in.
 
 2. Configure GITHUB Actions:  Follow the insturctions in the [GITHUB_ACTIONS_CONFIG.md file](.github/GITHUB_ACTIONS_CONFIG.md) (Located in the .github folder.)
 
-3. Setup DB and Storage Account
-  * Under your repository name, click Actions .
-  * In the left sidebar, click the workflow "Setup DB and Storage Account".
-  * Above the list of workflow runs, select Run workflow .
-  * Use the Branch dropdown to select the workflow's main branch, Click Run workflow.
-  * After the workflow completes, you'll find summary that lists the resource names.
-    + Storage Account
-    + Storage Container
-    + Database
-
-4. Setup WLS on AKS
+4. Manually run the workflow
   * Under your repository name, click Actions .
   * In the left sidebar, click the workflow "Setup WLS on AKS".
   * Above the list of workflow runs, select Run workflow.
   * Configure the workflow.
     + Use the Branch dropdown to select the workflow's main branch.
     + For **Included in names to disambiguate. Get from another pipeline execution**, enter disambiguation prefix, e.g. `test01`.
-    + For **Azure region for resources**, keep default value `eastus`.
-    + For **Specify storage account of uploading .war file**,  enter the storage account name that shows in "Setup DB and Storage Account" summary.
-    + For **Specify name of storage container within account**, enter the storage container name that shows in "Setup DB and Storage Account" summary.
-    + For **Name of the database. Get from another pipeline run**, enter the database name shows in "Setup DB and Storage Account" summary.
 
 # Cargo Tracker Website
 
@@ -94,3 +80,6 @@ This creates a local copy of the repository for you to work in.
 - A new page will open....it may take like 20 to 30 seconds to load (the WAR file is unpacking)
 - Once open, you will see the Pet Store Applicaiton Landing Page....
 
+# Learn more about Cargo Tracker
+
+See [Eclipse Cargo Tracker - Applied Domain-Driven Design Blueprints for Jakarta EE](cargo-tracker.md)

@@ -159,7 +159,7 @@ Secrets configured
 
 ## Tear down configuration
 
-Run the setup script
+Run the teardown script
 
 ```bash
 cd .github/workflows
