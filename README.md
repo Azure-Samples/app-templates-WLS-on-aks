@@ -1,6 +1,8 @@
-# Oracle Weblogic Server Cargo Tracker Application Deployed to Azure Kubernetes Service (AKS)
-## Description 
-This is sample app template of the Domain-Driven Design Jakarta EE application. The application is built with Maven and deployed to Oracle WebLogic Server running in an Azure Kubernetes Service (AKS). The applciation is exposed by Azure Application Gateway.
+# Oracle WebLogic Server Cargo Tracker Application Deployed to Azure Kubernetes Service (AKS)
+
+## Description
+
+This is sample app template of the Domain-Driven Design Jakarta EE application. The application is built with Maven and deployed to Oracle WebLogic Server running in an Azure Kubernetes Service (AKS). The application is exposed by Azure Application Gateway.
 
 ## Deploy Oracle WebLogic Server Application to Azure Kubernetes Service:
 
@@ -8,10 +10,12 @@ This is sample app template of the Domain-Driven Design Jakarta EE application. 
 Tech stack:
 
 - Azure Infra (VNet)
+- Azure Storage Account
+- Azure Container Registry
 - Azure Kubernetes Service
 - Azure Application Gateway
 - Azure PostgreSQL DB
-- Github Actions
+- GitHub Actions
 - Bicep
 - Docker
 - Maven
@@ -24,7 +28,7 @@ Tech stack:
 This is a quickstart template. It deploys the following:
 
 * Deploying Cargo Tracker App:
-  * Create Progres SQL Database
+  * Create ProgresSQL Database
   * Create the Cargo Tracker - build with Maven
   * Provisioning Azure Infra Services with ARM templates - build with BICEP
     * Create an Azure Container Registry
@@ -43,6 +47,7 @@ This is a quickstart template. It deploys the following:
 > Refer to the [App Templates](https://github.com/microsoft/App-Templates) repo Readme for more samples that are compatible with [AzureAccelerators](https://github.com/Azure/azure-dev/).
 
 ## Prerequisites
+
 - Local shell with Azure CLI installed or [Azure Cloud Shell](https://ms.portal.azure.com/#cloudshell/)
 - Azure Subscription, on which you are able to create resources and assign permissions
   - View your subscription using ```az account show``` 
@@ -50,36 +55,34 @@ This is a quickstart template. It deploys the following:
 - You must have an Oracle account. To create an Oracle account and accept the license agreement for WebLogic Server images, follow the steps in [Oracle Container Registry](https://aka.ms/wls-aks-ocr). Make note of your Oracle Account password and email.
 
 ## Getting Started
-### Fork the repository
 
 1. Fork the repository by clicking the 'Fork' button on the top right of the page.
 This creates a local copy of the repository for you to work in. 
 
-2. Configure GITHUB Actions:  Follow the insturctions in the [GITHUB_ACTIONS_CONFIG.md file](.github/GITHUB_ACTIONS_CONFIG.md) (Located in the .github folder.)
+2. Configure GITHUB Actions:  Follow the instructions in the [GITHUB_ACTIONS_CONFIG.md file](.github/GITHUB_ACTIONS_CONFIG.md) (Located in the .github folder.)
 
 4. Manually run the workflow
-  * Under your repository name, click Actions .
-  * In the left sidebar, click the workflow "Setup WLS on AKS".
-  * Above the list of workflow runs, select Run workflow.
-  * Configure the workflow.
-    + Use the Branch dropdown to select the workflow's main branch.
-    + For **Included in names to disambiguate. Get from another pipeline execution**, enter disambiguation prefix, e.g. `test01`.
 
-# Cargo Tracker Website
+* Under your repository name, click Actions.
+* In the left sidebar, click the workflow "Setup WLS on AKS".
+* Above the list of workflow runs, select Run workflow.
+* Configure the workflow.
+  + Use the Branch dropdown to select the workflow's main branch.
+  + For **Included in names to disambiguate. Get from another pipeline execution**, enter disambiguation prefix, e.g. `test01`.
 
-![Cargo Tracker cover](cargo_tracker_cover.png)
+5. Click Run workflow.
 
-4. If you wish to view the Pet Store Deployment, you have the following options:
+## Cargo Tracker Website
+
+![Cargo Tracker Website](cargo_tracker_website.png)
+
+If you wish to view the Pet Store Deployment, you have the following options:
 
 - Log into the Azure Portal
-- Nagivate the the "petstore_spoke_eastus" Resource Group
-- Locate the Wep App named: jbeappetstorewebapp (this is just a sample of what the Web App might be named)
-- Click it...
-- On the upper Right Hand Side, you will see a URL:  https://xxxxxxxxxxxxxxxxxxx.azurewebsites.net (this is just a sample URL)
-- Click it...
-- A new page will open....it may take like 20 to 30 seconds to load (the WAR file is unpacking)
-- Once open, you will see the Pet Store Applicaiton Landing Page....
+- Navigate to the `wlsd-aks-<your-disambiguate-prefix>-<number>` Resource Group
+- Select **Settings**, **Deployments**, **wls-on-aks**, **Outputs**, you will see `clusterExternalUrl`. The application URL is `${clusterExternalUrl}cargo-tracker/`.
+- Open your web browser, navigate to the application URL, you will see the Cargo Tracker Landing Page.
 
-# Learn more about Cargo Tracker
+## Learn more about Cargo Tracker
 
 See [Eclipse Cargo Tracker - Applied Domain-Driven Design Blueprints for Jakarta EE](cargo-tracker.md)
