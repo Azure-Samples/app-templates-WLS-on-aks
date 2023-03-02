@@ -76,12 +76,12 @@ This creates a local copy of the repository for you to work in.
 
 ![Cargo Tracker Website](cargo_tracker_website.png)
 
-If you wish to view the Pet Store Deployment, you have the following options:
+If you wish to view the Cargo Tracker Deployment, you have the following options:
 
 - Log into the Azure Portal
 - Navigate to the `wlsd-aks-<your-disambiguate-prefix>-<number>` Resource Group
 - Select **Settings**, **Deployments**, **wls-on-aks**, **Outputs**, you will see `clusterExternalUrl`. The application URL is `${clusterExternalUrl}cargo-tracker/`.
-- Open your web browser, navigate to the application URL, you will see the Cargo Tracker Landing Page.
+- Open your web browser, navigate to the application URL, you will see the Cargo Tracker landing page.
 
 ## Learn more about Cargo Tracker
 
