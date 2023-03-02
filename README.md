@@ -2,7 +2,7 @@
 
 ## Description
 
-This is sample app template of the Domain-Driven Design Jakarta EE application. The application is built with Maven and deployed to Oracle WebLogic Server running in an Azure Kubernetes Service (AKS). The application is exposed by Azure Application Gateway.
+This is a sample app template of the Domain-Driven Design Jakarta EE application. The application is built with Maven and deployed to Oracle WebLogic Server running in Azure Kubernetes Service (AKS). The app template uses the [official Azure offer for running WLS on AKS](https://aka.ms/wls-aks-portal). For a quickstart on this offer, see [https://aka.ms/wls-aks-quickstart](https://aka.ms/wls-aks-quickstart). The application is exposed by Azure Application Gateway.
 
 ## Deploy Oracle WebLogic Server Application to Azure Kubernetes Service:
 
@@ -40,7 +40,7 @@ This is a quickstart template. It deploys the following:
     * Expose your app with the application gateway
   * Verify your app
 
-* Cargo Tracker on Automated CI/CD with GitHub Action  
+* Cargo Tracker on Automated CI/CD with GitHub Action
   * CI/CD on GitHub Action
   * CI/CD in action with the app
 
@@ -53,6 +53,8 @@ This is a quickstart template. It deploys the following:
   - View your subscription using ```az account show``` 
   - If you don't have an account, you can [create one for free](https://azure.microsoft.com/free). 
 - You must have an Oracle account. To create an Oracle account and accept the license agreement for WebLogic Server images, follow the steps in [Oracle Container Registry](https://aka.ms/wls-aks-ocr). Make note of your Oracle Account password and email.
+- GitHub CLI (optional, but strongly recommended). To install the GitHub CLI on your dev environment, see [Installation](https://cli.github.com/manual/installation).
+
 
 ## Getting Started
 
