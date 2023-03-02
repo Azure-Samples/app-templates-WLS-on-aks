@@ -74,6 +74,10 @@ This creates a local copy of the repository for you to work in.
 
 5. Click Run workflow.
 
+## Workflow description
+
+PENDING: Using the comments in the workflow, put some bullet points here what the workflow does and how it does it.
+
 ## Cargo Tracker Website
 
 ![Cargo Tracker Website](cargo_tracker_website.png)
