@@ -126,15 +126,15 @@ This job is to build WLS on AKS templates into a ZIP file and make it ready to p
         └── test
     ```
 
-    + Build and test weblogic-azure/weblogic-azure-aks. Build and package the WLS on AKS templates into an ZIP file (e.g. wls-on-aks-azure-marketplace-1.0.56-arm-assembly.zip), which is ready to pubish to Azure partner center. It'll show up as an Azure Marketplace Application after going live. Customer is able to search and apply the Azure Marketplace Application in Azure portal. The structure of the ZIP file:
+  + Build and test weblogic-azure/weblogic-azure-aks. Build and package the WLS on AKS templates into an ZIP file (e.g. wls-on-aks-azure-marketplace-1.0.56-arm-assembly.zip), which is ready to pubish to Azure partner center. It'll show up as an Azure Marketplace Application after going live. Customer is able to search and apply the Azure Marketplace Application in Azure portal. The structure of the ZIP file:
 
-      ```text
-      ├── createUiDefinition.json
-      ├── mainTemplate.json (ARM template that is built from BICEP files, which will be invoked for the following deployments)
-      └── scripts (shell scripts and metadata)
-      ```
+    ```text
+    ├── createUiDefinition.json
+    ├── mainTemplate.json (ARM template that is built from BICEP files, which will be invoked for the following deployments)
+    └── scripts (shell scripts and metadata)
+    ```
 
-    + Archive weblogic-azure/weblogic-azure-aks template. Upload the ZIP file to the pipeline. The later jobs will download the ZIP file for further deployments.
+  + Archive weblogic-azure/weblogic-azure-aks template. Upload the ZIP file to the pipeline. The later jobs will download the ZIP file for further deployments.
 
 ### Job: deploy-db
 
