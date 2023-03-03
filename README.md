@@ -76,9 +76,11 @@ This creates a local copy of the repository for you to work in.
 
 ## Workflow description
 
+As mentioned above, the app template uses the [official Azure offer for running WLS on AKS](https://aka.ms/wls-aks-portal). The workflow uses the source code behind that offer by checking it out and invoking it from Azure CLI.
+
 ### Job: preflight
 
-This job is to build WLS on AKS templates into a ZIP file and make it ready to publish in the [Azure Partner Center](https://partner.microsoft.com/). Note that, the Azure Partner Center does not support BICEP, we have to build the BICEP files into the [solution template](https://learn.microsoft.com/en-us/azure/marketplace/plan-azure-app-solution-template).
+This job is to build WLS on AKS template into a ZIP file containing the ARM template to invoke.
 
 * Set up environment to build the WLS on AKS templates
   + Set up JDK 1.8
@@ -88,48 +90,10 @@ This job is to build WLS on AKS templates into a ZIP file and make it ready to p
   + Checkout azure-javaee-iaas, this is a precondition necessary to build WLS on AKS templates. For more details, see [Azure Marketplace Azure Application (formerly known as Solution Template) Helpers](https://github.com/Azure/azure-javaee-iaas).
 
 * Checkout and build WLS on AKS templates
-  + Checkout ${{ env.aksRepoUserName }}/weblogic-azure. Checkout [oracle/weblogic-azure](https://github.com/oracle/weblogic-azure) by default. This repository contains all the BICEP templates that provision Azure resources, configure WLS and deploy app to AKS. Structure of the repository:
+  + Checkout ${{ env.aksRepoUserName }}/weblogic-azure. Checkout [oracle/weblogic-azure](https://github.com/oracle/weblogic-azure) by default. This repository contains all the BICEP templates that provision Azure resources, configure WLS and deploy app to AKS. 
+  + Build and test weblogic-azure/weblogic-azure-aks. Build and package the WLS on AKS templates into a ZIP file (e.g. wls-on-aks-azure-marketplace-1.0.56-arm-assembly.zip). The structure of the ZIP file is:
 
     ```text
-    ├── README.md
-    ├── pom.xml
-    └── src
-        ├── main
-        │   ├── arm
-        │   │   ├── createUiDefinition.json
-        │   │   └── scripts (shell scripts and metadata)
-        │   ├── bicep
-        │   │   ├── mainTemplate.bicep (top level template to provision all the resources)
-        │   │   └── modules
-        │   │       ├── _appGateway.bicep (top level template to provision app gateway)
-        │   │       ├── _azure-resoruces
-        │   │       │   ├── _acr.bicep (provision ACR)
-        │   │       │   ├── _aks.bicep (provision AKS)
-        │   │       │   ├── _aksPodIdentity.bicep (enable AKS pod identity)
-        │   │       │   ├── _appgateway.bicep (provision application gateway)
-        │   │       │   ├── _dnsZones.bicep (provision Azure DNS zone)
-        │   │       │   ├── _keyvault (provision Azure KeyVault)
-        │   │       │   ├── _storage.bicep (provision Storage Account)
-        │   │       │   └── _vnetAppGateway.bicep (provision VNET for gateway)
-        │   │       ├── _deployment-scripts (update/connect azure resources)
-        │   │       ├── _pids (GUIDs used to track usage data)
-        │   │       ├── _preDeployedAzureResources.bicep 
-        │   │       ├── _rolesAssignment (provision role assignments)
-        │   │       ├── _setupDBConnection.bicep (configure general data source connection in WLS)
-        │   │       ├── _setupPasswordlessDBConnection.bicep (configure passwordless data source connection in WLS)
-        │   │       ├── _uamiAndRoles.bicep (provision user assgined managed identity that used in deployment scripts)
-        │   │       ├── networking.bicep (configure VNET resources)
-        │   │       ├── setupDBConnection.bicep (top level template to configure data source connection in WLS)
-        │   │       ├── setupWebLogicCluster.bicep (top level template to provision resources to run WLS and configure WLS)
-        │   │       └── updateWebLogicApplications.bicep (update existing WLS application)
-        │   └── resources
-        └── test
-    ```
-
-  + Build and test weblogic-azure/weblogic-azure-aks. Build and package the WLS on AKS templates into an ZIP file (e.g. wls-on-aks-azure-marketplace-1.0.56-arm-assembly.zip), which is ready to pubish to Azure partner center. It'll show up as an Azure Marketplace Application after going live. Customer is able to search and apply the Azure Marketplace Application in Azure portal. The structure of the ZIP file:
-
-    ```text
-    ├── createUiDefinition.json
     ├── mainTemplate.json (ARM template that is built from BICEP files, which will be invoked for the following deployments)
     └── scripts (shell scripts and metadata)
     ```
