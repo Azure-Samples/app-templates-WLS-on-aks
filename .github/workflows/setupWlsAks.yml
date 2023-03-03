@@ -36,7 +36,7 @@ env:
 jobs:
   # Make it so the bicep file that causes WLS on AKS to be deployed is available to this workflow.
   preflight:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Set up JDK 1.8
         uses: actions/setup-java@v1
@@ -262,3 +262,78 @@ jobs:
             --name wls-on-aks \
             --parameters @cargotracker/src/test/aks/parameters.json \
             --template-file ${artifactName}/mainTemplate.json
+      # Connect to AKS cluster for JMS configuration.
+      - name: Connect to AKS cluster
+        run: |
+          echo "connect to cluster"
+          aksClusterName=$(az resource list --resource-group ${{ env.resourceGroupForWlsAks }} --query "[?type=='Microsoft.ContainerService/managedClusters'].name|[0]" -o tsv)
+          az aks get-credentials --resource-group ${{ env.resourceGroupForWlsAks }} --name $aksClusterName
+      # Apply JMS configuration in src/test/aks/cargo-tracker-jms.yaml to cofigmap. This is necessary to have Cargo Tracker fully operational.
+      - name: Generate&Apply configmap
+        run: |
+          wlsConfigmapName=sample-domain1-wdt-config-map
+          wlsConfigmapJson=cargo-tracker-db.json
+          modelFilePath=models
+          mkdir ${modelFilePath}
+          echo "create configmap"
+          echo "export exisiting configmap"
+          kubectl -n sample-domain1-ns get configmap ${wlsConfigmapName} -o json >${wlsConfigmapJson}
+          echo "query model keys"
+          keyList=$(cat ${wlsConfigmapJson} | jq '.data | keys[]' | tr -d "\"")
+          for item in $keyList; do
+              data=$(cat ${wlsConfigmapJson} | jq ".data[\"${item}\"]")
+              data=$(echo "${data:1:${#data}-2}")
+              echo -e "${data}" >${modelFilePath}/${item}
+          done
+          # remove current configmap and create a new one
+          kubectl -n sample-domain1-ns delete configmap ${wlsConfigmapName}
+          cp cargotracker/src/test/aks/cargo-tracker-jms.yaml ${modelFilePath}/cargo-tracker-jms.yaml
+          kubectl -n sample-domain1-ns create configmap ${wlsConfigmapName} \
+          --from-file=${modelFilePath}
+          kubectl -n sample-domain1-ns label configmap ${wlsConfigmapName} \
+          weblogic.domainUID=sample-domain1
+          restartVersion=$(kubectl -n sample-domain1-ns get domain sample-domain1 '-o=jsonpath={.spec.restartVersion}')
+          # increase restart version
+          restartVersion=$((restartVersion + 1))
+          # record timestamp before apply changes
+          timestampBeforePatchingDomain=$(date +%s)
+          # get the replica number
+          replicas=$(kubectl -n sample-domain1-ns get domain sample-domain1 -o json | jq '. | .spec.clusters[] | .replicas')
+          echo "append configmap and update restart version"
+          kubectl -n sample-domain1-ns patch domain sample-domain1 \
+              --type=json \
+              '-p=[{"op": "replace", "path": "/spec/restartVersion", "value": "'${restartVersion}'" }, {"op": "add", "path": "/spec/configuration/model/configMap", "value": "'${wlsConfigmapName}'" }]'
+          echo "timestampBeforePatchingDomain=${timestampBeforePatchingDomain}" >> $GITHUB_ENV
+          echo "replicas=${replicas}" >> $GITHUB_ENV
+      - name: Verify pods are restarted
+        run: |
+          # interval of checking pod status.
+          checkPodStatusInterval=20
+          # max attempt to check pod status.
+          checkPodStatusMaxAttemps=30
+          # domain and namespaces
+          wlsDomainUID="sample-domain1"
+          wlsDomainNS=${wlsDomainUID}-ns
+          updatedPodNum=0
+          attempt=0
+          echo $timestampBeforePatchingDomain $appReplicas $wlsDomainUID $checkPodStatusMaxAttemps $checkPodStatusInterval
+          while [[ ${updatedPodNum} -le ${appReplicas} ]] && [[ $attempt -le ${checkPodStatusMaxAttemps} ]]; do
+              echo "attempts ${attempt}"
+              ret=$(kubectl get pods -n ${wlsDomainNS} -l weblogic.domainUID=${wlsDomainUID} -o json | jq '.items[] | .metadata.creationTimestamp' | tr -d "\"")
+              counter=0
+              for item in $ret; do
+                  podCreateTimeStamp=$(date -u -d "${item}" +"%s")
+                  echo "pod create time: $podCreateTimeStamp, base time: ${timestampBeforePatchingDomain}"
+                  if [[ ${podCreateTimeStamp} -gt ${timestampBeforePatchingDomain} ]]; then
+                      counter=$((counter + 1))
+                  fi
+              done
+              updatedPodNum=$counter
+              echo "Number of new pod: ${updatedPodNum}"
+              attempt=$((attempt + 1))
+              sleep ${checkPodStatusInterval}
+          done
+          if [[ ${attempt} -gt ${checkPodStatusMaxAttemps} ]]; then
+              echo "Failed to restart all weblogic server pods. "
+              exit 1
+          fi
