@@ -74,6 +74,80 @@ This creates a local copy of the repository for you to work in.
 
 5. Click Run workflow.
 
+## Workflow description
+
+As mentioned above, the app template uses the [official Azure offer for running WLS on AKS](https://aka.ms/wls-aks-portal). The workflow uses the source code behind that offer by checking it out and invoking it from Azure CLI.
+
+### Job: preflight
+
+This job is to build WLS on AKS template into a ZIP file containing the ARM template to invoke.
+
+* Set up environment to build the WLS on AKS templates
+  + Set up JDK 1.8
+  + Set up bicep 0.11.1
+
+* Download dependencies
+  + Checkout azure-javaee-iaas, this is a precondition necessary to build WLS on AKS templates. For more details, see [Azure Marketplace Azure Application (formerly known as Solution Template) Helpers](https://github.com/Azure/azure-javaee-iaas).
+
+* Checkout and build WLS on AKS templates
+  + Checkout ${{ env.aksRepoUserName }}/weblogic-azure. Checkout [oracle/weblogic-azure](https://github.com/oracle/weblogic-azure) by default. This repository contains all the BICEP templates that provision Azure resources, configure WLS and deploy app to AKS. 
+  + Build and test weblogic-azure/weblogic-azure-aks. Build and package the WLS on AKS templates into a ZIP file (e.g. wls-on-aks-azure-marketplace-1.0.56-arm-assembly.zip). The structure of the ZIP file is:
+
+    ```text
+    ├── mainTemplate.json (ARM template that is built from BICEP files, which will be invoked for the following deployments)
+    └── scripts (shell scripts and metadata)
+    ```
+
+  + Archive weblogic-azure/weblogic-azure-aks template. Upload the ZIP file to the pipeline. The later jobs will download the ZIP file for further deployments.
+
+### Job: deploy-db
+
+This job is to deploy PostgreSQL server and configure firewall setting.
+
+* Set Up Azure Database for PostgreSQL
+  + azure-login. Login Azure.
+  + Create Resource Group. Create a resource group to which the database will deploy.
+  + Set Up Azure Postgresql to Test dbTemplate. Provision Azure Database for PostgreSQL Single Server. The server allows access from Azure services.
+
+### Job: deploy-storage-account
+
+This job is to build Cargo Trakcer and deploy an Azure Storage Account with a container to store the application.
+
+* Build Cargo Trakcer
+  + Checkout cargotracker. Checkout Cargo Trakcer from this repository.
+  + Maven build web app. Build Cargo Trakcer with Maven. The war file locates in `cargotracker/target/cargo-tracker.war`
+
+* Provision Storage Account and container
+  + azure-login. Login Azure.
+  + Create Resource Group. Create a resource group to which the storage account will deploy.
+  + Create Storage Account. Create a storage account with name `${{ env.storageAccountName }}`.
+  + Create Storage Container. Create a container with name `${{ env.storageContainerName }}`.
+
+* Upload Cargo Trakcer to the container
+  + Upload built web app war file. Upload the application war file to the container using AZ CLI commands. The URL of the war file will pass to the ARM template as a parameter when deploying WLS on AKS templates.
+
+### Job: deploy-wls-on-aks
+
+This job is to provision Azure resources, configure WLS, run WLS on AKS and deploy the application to WLS using WLS on AKS solution template.
+
+* Download the WLS on AKS solution template
+  + Checkout ${{ env.aksRepoUserName }}/weblogic-azure. Checkout [oracle/weblogic-azure](https://github.com/oracle/weblogic-azure) to find the version information.
+  + Get version information from weblogic-azure/weblogic-azure-aks/pom.xml. Get the version info for solution template ZIP file, which is used to generate the ZIP file name: `wls-on-aks-azure-marketplace-${version}-arm-assembly.zip`
+  + Output artifact name for Download action. Generate and output the ZIP file name: `wls-on-aks-azure-marketplace-${version}-arm-assembly.zip`.
+  + Download artifact for deployment. Download the ZIP file that is built in job:preflight.
+
+* Deploy WLS on AKS and Cargo Tracker
+  + azure-login. Login Azure.
+  + Query web app blob url and set to env. Obtain blob url for cargo-tracker.war, which will server as a parameter for the deployment.
+  + Create Resource Group. Create a resource group for WLS on AKS.
+  + Checkout cargotracker. Checkout the parameter template.
+  + Prepare parameter file. Set values to the parameters.
+  + Validate Deploy of WebLogic Server Cluster Domain offer. Validate the parameters file in the context of the bicep template to be invoked. This will catch some errors before taking the time to start the full deployment. `--template-file` is the mainTemplate.json from solution template ZIP file. `--parameters` is the parameter file created in last step.
+  + Deploy WebLogic Server Cluster Domain offer. Invoke the mainTemplate.json to deploy resources and configurations. After the deployment completes, you'll get the following result:
+    + An Azure Container Registry and a WLS image that contains Cargo Tracker in the ACR repository.
+    + An Azure Kubernetes Service with WLS running in `sample-domain1-ns` namespace, including 1 pod for WLS admin server and 2 pods for managed server.
+    + An Azure Application Gateway that is able to route to the backend WLS pods. You can access the application using `http://<gateway-hostname>/cargo-tracker/`
+
 ## Cargo Tracker Website
 
 ![Cargo Tracker Website](cargo_tracker_website.png)

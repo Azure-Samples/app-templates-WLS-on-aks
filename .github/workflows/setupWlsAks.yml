@@ -8,6 +8,9 @@ on:
         required: true
   repository_dispatch:
 
+# All of the secrets in the env section are required. Run setup.sh to
+# populate the git repository running this workflow with the necessary secrets.
+    
 env:
   aksRepoUserName: oracle
   aksRepoBranchName: 364b7648bbe395cb17683180401d07a3029abe91
@@ -31,6 +34,7 @@ env:
   wlsPassword: ${{ secrets.WLS_PSW }}
 
 jobs:
+  # Make it so the bicep file that causes WLS on AKS to be deployed is available to this workflow.
   preflight:
     runs-on: ubuntu-latest
     steps:
@@ -44,6 +48,7 @@ jobs:
           chmod +x ./bicep
           sudo mv ./bicep /usr/local/bin/bicep
           bicep --version
+      # This is a precondition necessary to generate the bicep file to deploy WLS on AKS.
       - name: Checkout azure-javaee-iaas
         uses: actions/checkout@v2
         with:
@@ -52,12 +57,14 @@ jobs:
           ref: ${{ env.refJavaee }}
       - name: Build azure-javaee-iaas
         run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
+      # Check out the repository containing the code to deploy WLS on AKS.
       - name: Checkout ${{ env.aksRepoUserName }}/weblogic-azure
         uses: actions/checkout@v2
         with:
           repository: ${{ env.aksRepoUserName }}/weblogic-azure
           path: weblogic-azure
           ref: ${{ env.aksRepoBranchName }}
+      # Generate the WLS on AKS bicep template so it can be invoked later. The bicep template is enclosed in a zip file.
       - name: Build and test weblogic-azure/weblogic-azure-aks
         run: mvn -Pbicep -Ddev -Passembly clean install --file weblogic-azure/weblogic-azure-aks/pom.xml
       - name: Generate artifact file name and path
@@ -68,12 +75,14 @@ jobs:
           unzip weblogic-azure/weblogic-azure-aks/target/$artifactName.zip -d weblogic-azure/weblogic-azure-aks/target/$artifactName
           echo "##[set-output name=artifactName;]${artifactName}"
           echo "##[set-output name=artifactPath;]weblogic-azure/weblogic-azure-aks/target/$artifactName"
+      # Make the contents of the zip file available for use later in the workflow.
       - name: Archive weblogic-azure/weblogic-azure-aks template
         uses: actions/upload-artifact@v1
         if: success()
         with:
           name: ${{steps.artifact_file.outputs.artifactName}}
           path: ${{steps.artifact_file.outputs.artifactPath}}
+  # Set up database for use by application.
   deploy-db:
     needs: preflight
     runs-on: ubuntu-latest
@@ -112,6 +121,7 @@ jobs:
             -n "AllowAllWindowsAzureIps" \
             --start-ip-address "0.0.0.0" \
             --end-ip-address "0.0.0.0"
+  # Create an Azure storage account to hold the application war so that WLS on AKS can access it at deployment time.
   deploy-storage-account:
     needs: preflight
     runs-on: ubuntu-latest
@@ -156,6 +166,7 @@ jobs:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
             az storage blob upload --account-name ${{ env.storageAccountName }} --container-name ${{ env.storageContainerName }} --file cargotracker/target/cargo-tracker.war --name cargo-tracker.war
+  # Invoke the bicep file, passing the necessary parameters to identify the database and war file.
   deploy-wls-on-aks:
     needs: [deploy-db,deploy-storage-account]
     runs-on: ubuntu-latest
@@ -225,6 +236,7 @@ jobs:
         with:
           name: archivefiles
           path: cargotracker/src/test/aks/parameters.json
+      # Validate the parameters file in the context of the bicep template to be invoked. This will catch some errors before taking the time to start the full deployment.
       - name: Validate Deploy of WebLogic Server Cluster Domain offer
         id: validate-wls-cluster-deployment
         uses: azure/CLI@v1
@@ -237,6 +249,7 @@ jobs:
             --name wls-on-aks \
             --parameters @cargotracker/src/test/aks/parameters.json \
             --template-file ${artifactName}/mainTemplate.json
+      # Invoke the bicep template with the parameters file.
       - name: Deploy WebLogic Server Cluster Domain offer
         id: deploy-wls-cluster
         uses: azure/CLI@v1
