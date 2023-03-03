@@ -136,7 +136,7 @@ This job is to provision Azure resources, configure WLS, run WLS on AKS and depl
   + Output artifact name for Download action. Generate and output the ZIP file name: `wls-on-aks-azure-marketplace-${version}-arm-assembly.zip`.
   + Download artifact for deployment. Download the ZIP file that is built in job:preflight.
 
-* Deploy WLS on AKS and Cargo Tracker
+* Deploy WLS on AKS
   + azure-login. Login Azure.
   + Query web app blob url and set to env. Obtain blob url for cargo-tracker.war, which will server as a parameter for the deployment.
   + Create Resource Group. Create a resource group for WLS on AKS.
@@ -147,6 +147,11 @@ This job is to provision Azure resources, configure WLS, run WLS on AKS and depl
     + An Azure Container Registry and a WLS image that contains Cargo Tracker in the ACR repository.
     + An Azure Kubernetes Service with WLS running in `sample-domain1-ns` namespace, including 1 pod for WLS admin server and 2 pods for managed server.
     + An Azure Application Gateway that is able to route to the backend WLS pods. You can access the application using `http://<gateway-hostname>/cargo-tracker/`
+
+* Enable Cargo Tracker with full operations
+  + Connect to AKS cluster. Though the application is accessible, but some functionalities are not ready. We have to apply JMS configuration in `src/test/aks/cargo-tracker-jms.yaml` to WLS cluster. This step is to connect to AKS cluster to update WLS configuration.
+  + Generate&Apply configmap. Append JMS configuration in `src/test/aks/cargo-tracker-jms.yaml` to WLS configuration, which is stored in configmap `sample-domain1-wdt-config-map` in `sample-domain1-ns` namespace. Then the step causes a rolling update on the WLS pods.
+  + Verify pods are restarted. This step is to wait for WLS cluster ready. You can follow steps in [Exercise the Cargo Tracker app](https://www.ridingthecrest.com/javaland-javaee/wls#exercise-the-cargo-tracker-app) to validate the JMS configuration.
 
 ## Cargo Tracker Website
 

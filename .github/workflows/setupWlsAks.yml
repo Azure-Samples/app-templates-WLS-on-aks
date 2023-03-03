@@ -73,8 +73,8 @@ jobs:
           version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' weblogic-azure/weblogic-azure-aks/pom.xml)
           artifactName=wls-on-aks-azure-marketplace-$version-arm-assembly
           unzip weblogic-azure/weblogic-azure-aks/target/$artifactName.zip -d weblogic-azure/weblogic-azure-aks/target/$artifactName
-          echo "##[set-output name=artifactName;]${artifactName}"
-          echo "##[set-output name=artifactPath;]weblogic-azure/weblogic-azure-aks/target/$artifactName"
+          echo "artifactName=${artifactName}" >> "$GITHUB_OUTPUT"
+          echo "artifactPath=weblogic-azure/weblogic-azure-aks/target/$artifactName" >> "$GITHUB_OUTPUT"
       # Make the contents of the zip file available for use later in the workflow.
       - name: Archive weblogic-azure/weblogic-azure-aks template
         uses: actions/upload-artifact@v1
@@ -187,7 +187,7 @@ jobs:
         run: |
           artifactName=wls-on-aks-azure-marketplace-$version-arm-assembly
           echo "artifactName=${artifactName}" >> $GITHUB_ENV
-          echo "##[set-output name=artifactName;]${artifactName}"
+          echo "artifactName=${artifactName}" >> "$GITHUB_OUTPUT"
       - name: Download artifact for deployment
         uses: actions/download-artifact@v1
         with:
@@ -268,7 +268,7 @@ jobs:
           echo "connect to cluster"
           aksClusterName=$(az resource list --resource-group ${{ env.resourceGroupForWlsAks }} --query "[?type=='Microsoft.ContainerService/managedClusters'].name|[0]" -o tsv)
           az aks get-credentials --resource-group ${{ env.resourceGroupForWlsAks }} --name $aksClusterName
-      # Apply JMS configuration in src/test/aks/cargo-tracker-jms.yaml to cofigmap. This is necessary to have Cargo Tracker fully operational.
+      # Apply JMS configuration in src/test/aks/cargo-tracker-jms.yaml to configmap. This is necessary to have Cargo Tracker fully operational.
       - name: Generate&Apply configmap
         run: |
           wlsConfigmapName=sample-domain1-wdt-config-map
@@ -305,6 +305,7 @@ jobs:
               '-p=[{"op": "replace", "path": "/spec/restartVersion", "value": "'${restartVersion}'" }, {"op": "add", "path": "/spec/configuration/model/configMap", "value": "'${wlsConfigmapName}'" }]'
           echo "timestampBeforePatchingDomain=${timestampBeforePatchingDomain}" >> $GITHUB_ENV
           echo "replicas=${replicas}" >> $GITHUB_ENV
+      # Make sure all the pods are running.
       - name: Verify pods are restarted
         run: |
           # interval of checking pod status.
