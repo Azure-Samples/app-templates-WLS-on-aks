@@ -164,6 +164,36 @@ If you wish to view the Cargo Tracker Deployment, you have the following options
 - Select **Settings**, **Deployments**, **wls-on-aks**, **Outputs**, you will see `clusterExternalUrl`. The application URL is `${clusterExternalUrl}cargo-tracker/`.
 - Open your web browser, navigate to the application URL, you will see the Cargo Tracker landing page.
 
+## Exercise Cargo Tracker Functionality
+
+1. On the main page, select **Public Tracking Interface** in new window. 
+
+   1. Enter **ABC123** and select **Track!**
+
+   1. Observe what the **next expected activity** is.
+
+1. On the main page, select **Administration Interface**, then, in the left navigation column select **Live** in a new window.  This opens up a map view.
+
+   1. Mouse over the pins and find the one for **ABC123**.  Take note of the information in the hover window.
+
+1. On the main page, select **Mobile Event Logger**.  This opens up in a new, small, window.
+
+1. Drop down the menu and select **ABC123**.  Select **Next**.
+
+1. Select the **Location** using the information in the **next expected activity**.  Select **Next**.
+
+1. Select the **Event Type** using the information in the **next expected activity**.  Select **Next**.
+
+1. Select the **Voyage** using the information in the **next expected activity**.  Select **Next**.
+
+1. Set the **Completion Date** a few days in the future.  Select **Next**.
+
+1. Review the information and verify it matches the **next expected activity**.  If not, go back and fix it.  If so, select **Submit**.
+
+1. Back on the **Public Tracking Interface** select **Tracking** then enter **ABC123** and select **Track**.  Observe that a different. **next expected activity** is listed.
+
+1. If desired, go back to **Mobile Event Logger** and continue performing the next activity.
+
 ## Learn more about Cargo Tracker
 
 See [Eclipse Cargo Tracker - Applied Domain-Driven Design Blueprints for Jakarta EE](cargo-tracker.md)
